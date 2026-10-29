@@ -97,10 +97,21 @@ if question:
         start_time_3 = time.perf_counter()
         # Open the existing vector database
         vector_client = chromadb.PersistentClient(path="./chroma_db")
-
-        collection = vector_client.get_collection(
+        collection = vector_client.get_or_create_collection(
             name="company_policies"
         )
+
+        if collection.count() == 0:
+            collection.add(
+                ids=[str(i) for i in range(len(policies))],
+                documents=[
+                    f"Policy: {row['title']}\n"
+                    f"Department: {row['department']}\n"
+                    f"Text: {row['policy_text']}"
+                    for _, row in policies.iterrows()
+                ]
+            )
+            
 
         # Find the 3 most relevant policies
         results = collection.query(
